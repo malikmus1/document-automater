@@ -1,8 +1,11 @@
+import json
 from pathlib import Path
 import click
 from playwright.sync_api import sync_playwright
 import yaml
 from sec_reports.client import build_session
+from sec_reports.converter import render_to_pdf
+from sec_reports.filings import get_latest_10k
 from sec_reports.resolver import resolve_ticker
 from .models import Company
 
@@ -20,8 +23,53 @@ def _process_company(company: Company, output_dir: Path, session, browser) -> bo
         cik, official_name = resolve_ticker(company.ticker, session)
         print(f"CIK: {cik}  ({official_name})")
     except Exception as exc:
-        print(f"   ERROR resolving ticker: {exc}")
+        print(f"ERROR resolving ticker: {exc}")
         return False
+    
+    try:
+        filing = get_latest_10k(cik, company, session)
+        print(f"Filing: {filing.form}  {filing.filing_date}  ({filing.accession_number})")
+        print(f"URL: {filing.document_url}")
+    except Exception as exc:
+        print(f"ERROR fetching 10-K: {exc}")
+        return False
+    
+    company_dir = output_dir / company.name.lower().replace(" ", "_")
+    company_dir.mkdir(parents=True, exist_ok=True)
+
+    html_path = company_dir / "filing.html"
+    try:
+        resp = session.get(filing.document_url, timeout=60)
+        resp.raise_for_status()
+        html_path.write_bytes(resp.content)
+        print(f"HTML: {html_path}")
+    except Exception as exc:
+        print(f"ERROR downloading HTML: {exc}")
+        return False
+
+    pdf_path = company_dir / "filing.pdf"
+    try:
+        render_to_pdf(html_path, pdf_path, browser)
+        print(f"PDF: {pdf_path}")
+    except Exception as exc:
+        print(f"ERROR rendering PDF: {exc}")
+        return False
+
+    metadata = {
+        "company": company.name,
+        "ticker": company.ticker,
+        "cik": cik,
+        "form": filing.form,
+        "filing_date": filing.filing_date,
+        "accession_number": filing.accession_number,
+        "sec_filing_url": filing.document_url,
+        "local_html": str(html_path),
+        "local_pdf": str(pdf_path),
+    }
+    metadata_path = company_dir / "metadata.json"
+    metadata_path.write_text(json.dumps(metadata, indent=2))
+    print(f"Metadata : {metadata_path}")
+    return True
     
     
 
