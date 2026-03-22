@@ -28,6 +28,7 @@ def _load_companies(config_path: Path = CONFIG_PATH) -> list[Company]:
 
     return [Company(**entry) for entry in data["companies"]]
 
+
 def _process_company(company: Company, output_dir: Path, session, browser) -> bool:
     print(f"\n-- {company.name} ({company.ticker}) --")
 
@@ -38,16 +39,18 @@ def _process_company(company: Company, output_dir: Path, session, browser) -> bo
     except Exception as exc:
         print(f"ERROR resolving ticker: {exc}")
         return False
-    
+
     try:
         filing = get_latest_10k(cik, company, session)
-        print(f"Filing: {filing.form}  {filing.filing_date}  ({filing.accession_number})")
+        print(
+            f"Filing: {filing.form}  {filing.filing_date}  ({filing.accession_number})"
+        )
         print(f"URL: {filing.document_url}")
         time.sleep(REQUEST_DELAY)
     except Exception as exc:
         print(f"ERROR fetching 10-K: {exc}")
         return False
-    
+
     company_dir = output_dir / company.name.lower().replace(" ", "_")
     company_dir.mkdir(parents=True, exist_ok=True)
 
@@ -85,24 +88,26 @@ def _process_company(company: Company, output_dir: Path, session, browser) -> bo
     metadata_path.write_text(json.dumps(metadata, indent=2))
     print(f"Metadata : {metadata_path}")
     return True
-    
-    
-
 
 
 @click.command()
 @click.option("--output", default="output", help="Output directory (default ./output)")
-@click.option("--config", default=None, type=click.Path(exists=True, path_type=Path), help="path to companies Yaml config (default: companies.yaml)")
-def run(output:str, config: Path | None) -> None:
+@click.option(
+    "--config",
+    default=None,
+    type=click.Path(exists=True, path_type=Path),
+    help="path to companies Yaml config (default: companies.yaml)",
+)
+def run(output: str, config: Path | None) -> None:
     output_dir = Path(output)
     session = build_session()
-    successes, failures = 0,0
+    successes, failures = 0, 0
 
     print("SEC 10-K Report Fetcher")
-    print("=" *40)
+    print("=" * 40)
 
     with sync_playwright() as playwright:
-        browser=playwright.chromium.launch()
+        browser = playwright.chromium.launch()
         for company in _load_companies(config or CONFIG_PATH):
             ok = _process_company(company, output_dir, session, browser)
             if ok:

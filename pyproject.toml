@@ -7,11 +7,14 @@ dependencies = [
     "playwright>=1.40",
     "requests>=2.31",
     "PyYAML>=6.0",
+    "jsonschema>=4.0",
 ]
 
 [project.scripts]
 fetch-reports = "sec_reports.main:run"
 
 [dependency-groups]
-dev = []
+dev = [
+    "black>=26.3.1",
+]
 

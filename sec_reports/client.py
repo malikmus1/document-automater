@@ -11,6 +11,7 @@ _RETRY_STRATEGY = Retry(
     allowed_methods=["GET"],
 )
 
+
 def build_session() -> requests.Session:
     session = requests.Session()
     session.headers.update(
