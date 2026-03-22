@@ -1,7 +1,7 @@
 import requests
 
 from .models import Company, FilingInfo
-from .settings import SUBMISSIONS_URL
+from .settings import SUBMISSIONS_URL, EDGAR_ARCHIVE_URL
 
 
 def get_latest_10k(cik: str, company: Company, session: requests.Session) -> FilingInfo:
@@ -23,10 +23,7 @@ def get_latest_10k(cik: str, company: Company, session: requests.Session) -> Fil
             accession = accessions[i]
             accession_nodashes = accession.replace("-", "")
             numeric_cik = str(int(cik))  # strip leading zeros for archive URL
-            doc_url = (
-                f"https://www.sec.gov/Archives/edgar/data/"
-                f"{numeric_cik}/{accession_nodashes}/{primary_docs[i]}"
-            )
+            doc_url = f"{EDGAR_ARCHIVE_URL}{numeric_cik}/{accession_nodashes}/{primary_docs[i]}"
             return FilingInfo(
                 company=company,
                 cik=cik,

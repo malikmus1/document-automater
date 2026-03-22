@@ -4,6 +4,7 @@ CONFIG_PATH = Path(__file__).parent / "companies.yaml"
 
 TICKER_URL = "https://www.sec.gov/files/company_tickers.json"
 SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
+EDGAR_ARCHIVE_URL = "https://www.sec.gov/Archives/edgar/data/"
 
 USER_AGENT = "Malik malik.interista@hotmail.com"
 HTTP_RETRY_TOTAL = 3
