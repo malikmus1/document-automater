@@ -29,6 +29,13 @@ Reports are saved to `./output/<company>/` with `filing.html`, `filing.pdf`, and
 |------|---------|-------------|
 | `--output <dir>` | `output` | Directory to write reports into |
 | `--config <path>` | `sec_reports/companies.yaml` | Path to a custom companies YAML file |
+| `--help` | - | Show the Click help message and exit |
+
+Show the CLI help:
+
+```bash
+uv run fetch-reports --help
+```
 
 ```bash
 uv run fetch-reports --output reports --config my_companies.yaml
