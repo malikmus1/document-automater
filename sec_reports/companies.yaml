@@ -1,0 +1,13 @@
+companies:
+  - name: Apple
+    ticker: AAPL
+  - name: Meta
+    ticker: META
+  - name: Alphabet
+    ticker: GOOGL
+  - name: Amazon
+    ticker: AMZN
+  - name: Netflix
+    ticker: NFLX
+  - name: Goldman Sachs
+    ticker: GS

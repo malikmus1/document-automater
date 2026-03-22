@@ -13,5 +13,4 @@ class FilingInfo:
     filing_date: str
     accession_number:str
     primary_document: str
-    document_url:
-    
+    document_url: str
