@@ -1,13 +1,14 @@
 import requests
 
-_TICKER_URL = "https://www.sec.gov/files/company_tickers.json"
+from .settings import TICKER_URL
+
 
 def resolve_ticker(ticker:str, session: requests.Session) -> tuple[str,str]:
     """
     Resolve the ticker symboil to (cik_padded_10, official_company_name)
     usinmg SEC:s company_tickers.json mapping.
     """
-    resp = session.get(_TICKER_URL, timeout=30)
+    resp = session.get(TICKER_URL, timeout=30)
     resp.raise_for_status()
 
     # Shouldnt be necessary if we add schema validation

@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
+import time
 import click
+import jsonschema
 from playwright.sync_api import sync_playwright
 import yaml
 from sec_reports.client import build_session
@@ -8,13 +10,23 @@ from sec_reports.converter import render_to_pdf
 from sec_reports.filings import get_latest_10k
 from sec_reports.resolver import resolve_ticker
 from .models import Company
+from .settings import CONFIG_PATH, REQUEST_DELAY, COMPANIES_SCHEMA
 
-_CONFIG_PATH = Path(__file__).parent / "companies.yaml"
 
-def _load_companies(config_path: Path = _CONFIG_PATH) -> list[Company]:
-    # TODO: Add try + schema validator 
-    data = yaml.safe_load(config_path.read_text())
-    return [Company(**entry) for entry in data ["companies"]]
+def _load_companies(config_path: Path = CONFIG_PATH) -> list[Company]:
+    try:
+        data = yaml.safe_load(config_path.read_text())
+    except FileNotFoundError:
+        raise SystemExit(f"Config file not found: {config_path}")
+    except yaml.YAMLError as exc:
+        raise SystemExit(f"Failed to parse config YAML: {exc}")
+
+    try:
+        jsonschema.validate(data, COMPANIES_SCHEMA)
+    except jsonschema.ValidationError as exc:
+        raise SystemExit(f"Invalid config: {exc.message}")
+
+    return [Company(**entry) for entry in data["companies"]]
 
 def _process_company(company: Company, output_dir: Path, session, browser) -> bool:
     print(f"\n-- {company.name} ({company.ticker}) --")
@@ -22,6 +34,7 @@ def _process_company(company: Company, output_dir: Path, session, browser) -> bo
     try:
         cik, official_name = resolve_ticker(company.ticker, session)
         print(f"CIK: {cik}  ({official_name})")
+        time.sleep(REQUEST_DELAY)
     except Exception as exc:
         print(f"ERROR resolving ticker: {exc}")
         return False
@@ -30,6 +43,7 @@ def _process_company(company: Company, output_dir: Path, session, browser) -> bo
         filing = get_latest_10k(cik, company, session)
         print(f"Filing: {filing.form}  {filing.filing_date}  ({filing.accession_number})")
         print(f"URL: {filing.document_url}")
+        time.sleep(REQUEST_DELAY)
     except Exception as exc:
         print(f"ERROR fetching 10-K: {exc}")
         return False
@@ -43,6 +57,7 @@ def _process_company(company: Company, output_dir: Path, session, browser) -> bo
         resp.raise_for_status()
         html_path.write_bytes(resp.content)
         print(f"HTML: {html_path}")
+        time.sleep(REQUEST_DELAY)
     except Exception as exc:
         print(f"ERROR downloading HTML: {exc}")
         return False
@@ -88,7 +103,7 @@ def run(output:str, config: Path | None) -> None:
 
     with sync_playwright() as playwright:
         browser=playwright.chromium.launch()
-        for company in _load_companies(config or _CONFIG_PATH):
+        for company in _load_companies(config or CONFIG_PATH):
             ok = _process_company(company, output_dir, session, browser)
             if ok:
                 successes += 1

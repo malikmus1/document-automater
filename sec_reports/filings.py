@@ -1,8 +1,7 @@
 import requests
 
 from .models import Company, FilingInfo
-
-_SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
+from .settings import SUBMISSIONS_URL
 
 
 def get_latest_10k(cik: str, company: Company, session: requests.Session) -> FilingInfo:
@@ -10,7 +9,7 @@ def get_latest_10k(cik: str, company: Company, session: requests.Session) -> Fil
     Fetch the latest exact 10-K filing (excludes 10-K/A amendments)
     for the given CIK from the EDGAR submissions API.
     """
-    resp = session.get(_SUBMISSIONS_URL.format(cik=cik), timeout=30)
+    resp = session.get(SUBMISSIONS_URL.format(cik=cik), timeout=30)
     resp.raise_for_status()
 
     recent = resp.json()["filings"]["recent"]

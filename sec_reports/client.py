@@ -2,11 +2,12 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-_USER_AGENT = "Malik malik.interista@hotmail.com"
+from .settings import USER_AGENT, HTTP_RETRY_TOTAL, HTTP_RETRY_BACKOFF
 
 _RETRY_STRATEGY = Retry(
-    total = 3,
-    backoff_factor=1.5,
+    total=HTTP_RETRY_TOTAL,
+    backoff_factor=HTTP_RETRY_BACKOFF,
+    status_forcelist=[429, 500, 502, 503, 504],
     allowed_methods=["GET"],
 )
 
@@ -14,7 +15,7 @@ def build_session() -> requests.Session:
     session = requests.Session()
     session.headers.update(
         {
-            "User-Agent": _USER_AGENT,
+            "User-Agent": USER_AGENT,
             "Accept-Encoding": "gzip, deflate",
             "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
